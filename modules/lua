@@ -44,25 +44,27 @@ module_arch_build()
     make install INSTALL_TOP=${INSTALLPATH}
     make clean
 }
-  
+
 module_lib_create()
 {
+    libs=$1
     mkdir -p ${CURRENTPATH}/lib
-    lipo -create \
-        ${BUILD_ROOT_PATH}/iPhoneSimulator-x86_64.sdk/lib/lib${MODEL}.a \
-        ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/lib/lib${MODEL}.a \
-        ${BUILD_ROOT_PATH}/iPhoneOS-arm64.sdk/lib/lib${MODEL}.a \
-        ${BUILD_ROOT_PATH}/iPhoneOS-armv7s.sdk/lib/lib${MODEL}.a \
-        ${BUILD_ROOT_PATH}/iPhoneOS-armv7.sdk/lib/lib${MODEL}.a \
-        -output ${CURRENTPATH}/lib/lib${MODEL}.a
+    for lib_name in ${libs}; do
+        lipo -create \
+            ${BUILD_ROOT_PATH}/iPhoneSimulator-x86_64.sdk/lib/lib${lib_name}.a \
+            ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/lib/lib${lib_name}.a \
+            ${BUILD_ROOT_PATH}/iPhoneOS-arm64.sdk/lib/lib${lib_name}.a \
+            ${BUILD_ROOT_PATH}/iPhoneOS-armv7s.sdk/lib/lib${lib_name}.a \
+            ${BUILD_ROOT_PATH}/iPhoneOS-armv7.sdk/lib/lib${lib_name}.a \
+            -output ${CURRENTPATH}/lib/lib${lib_name}.a
+    done
 }
 
 module_inc_copy()
 {
-    mkdir -p ${CURRENTPATH}/include
-    includes="lauxlib.h lua.h lua.hpp luaconf.h lualib.h" 
+    includes=$1
     for inc in ${includes}; do
-        cp ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/include/${inc} ${CURRENTPATH}/include
+        cp -R ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/include/${inc} ${CURRENTPATH}/include
     done
 }
 
@@ -79,8 +81,8 @@ module_building()
     module_arch_build armv7s iPhoneOS
     module_arch_build i386 iPhoneSimulator
     module_arch_build x86_64 iPhoneSimulator
-    module_lib_create
-    module_inc_copy
+    module_lib_create "lua"
+    module_inc_copy "lauxlib.h lua.h lua.hpp luaconf.h lualib.h"
     echo "Building done." 
 }
 

@@ -1,9 +1,9 @@
 ###########################################################################
 #  Change values here                                                     #
 #                                                                         #
-MODEL="curl"                                                              #
-VERSION="7.34.0"                                                          #
-SRCURL="http://curl.haxx.se/download/${MODEL}-${VERSION}.tar.gz"          #
+MODEL="ddpush-daemon"                                                     #
+VERSION="0.0.1"                                                           #
+SRCURL="http://localhost/releases/${MODEL}-${VERSION}.tar.gz"             #
 #                                                                         #
 ###########################################################################
 
@@ -29,54 +29,33 @@ module_arch_build()
             ;;
     esac
  
-    export CFLAGS="-arch ${target} -isysroot ${SDK_PATH} -miphoneos-version-min=${iOS_SDK_MIN}"
-    export CC="${DEV_PATH}/usr/bin/clang"
-    export CPP="${DEV_PATH}/usr/bin/cpp"
-    export AR="${DEV_PATH}/usr/bin/ar"
-    export RANLIB="${DEV_PATH}/usr/bin/ranlib"
- 
-    ./configure --prefix="${INSTALLPATH}" --host=arm \
-                --enable-optimize \
-                --without-ssl \
-                --enable-symbol-hiding \
-                --disable-ares \
-                --enable-static \
-                --disable-shared \
-                --disable-ftp \
-                --disable-file \
-                --disable-ldap \
-                --disable-ldaps \
-                --disable-rtsp \
-                --disable-proxy \
-                --disable-dict \
-                --disable-telnet \
-                --disable-tftp \
-                --disable-pop3 \
-                --disable-imap \
-                --disable-smtp \
-                --disable-gopher \
-                --disable-manual \
-                --disable-libcurl-option \
-                --disable-ipv6 \
-                --disable-versioned-symbols \
-                --disable-sspi \
-                --disable-crypto-auth \
-                --disable-ntlm-wb \
-                --disable-tls-srp \
-                --disable-soname-bump \
-                --disable-verbose
+    CC="${DEV_PATH}/usr/bin/clang -arch ${target}"
+    AR="${DEV_PATH}/usr/bin/ar"
+    RANLIB="${DEV_PATH}/usr/bin/ranlib"
+    STRIP="${DEV_PATH}/usr/bin/strip"
+    MYCFLAGS="-std=gnu99 -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -Wall -O3 -fPIC -miphoneos-version-min=${iOS_SDK_MIN}"
+    LDFLAGS="-L${INSTALLPATH}/lib -framework Foundation -framework Security -lcurl -llua -luv -lhaywire -lz"
+
+    sed -ie "s#^CC=.*#CC=${CC}#" "Makefile"
+    sed -ie "s#^AR=.*#AR=${AR}#" "Makefile"
+    sed -ie "s#^RANLIB=.*#RANLIB=${RANLIB}#" "Makefile"
+    sed -ie "s#^STRIP=.*#STRIP=${STRIP}#" "Makefile"
+    sed -ie "s#^LIBS=.*#LIBS=${LIBS}#" "Makefile"
+    sed -ie "s#^CFLAGS=.*#CFLAGS=${MYCFLAGS} -arch ${target} -isysroot ${SDK_PATH} -I${INSTALLPATH}/include #" "Makefile"
+    sed -ie "s#^LDFLAGS=.*#LDFLAGS=${LDFLAGS}#" "Makefile"
+    sed -ie "s#^PREFIX=.*#PREFIX=${INSTALLPATH}#" "Makefile"
+
+    sed -ie "s#^CC=.*#CC=${CC}#" "deps/Makefile.haywire"
+    sed -ie "s#^AR=.*#AR=${AR}#" "deps/Makefile.haywire"
+    sed -ie "s#^RANLIB=.*#RANLIB=${RANLIB}#" "deps/Makefile.haywire"
+    sed -ie "s#^LDFLAGS=.*#LDFLAGS=${LDFLAGS}#" "deps/Makefile.haywire"
+    sed -ie "s#^CFLAGS=.*#CFLAGS=${MYCFLAGS} -arch ${target} -isysroot ${SDK_PATH} -I${INSTALLPATH}/include #" "deps/Makefile.haywire"
 
     make 
     make install
     make clean
-    
-    unset CFLAGS
-    unset CC
-    unset CPP
-    unset AR
-    unset RANLIB
 }
-
+  
 module_lib_create()
 {
     libs=$1
@@ -113,8 +92,9 @@ module_building()
     module_arch_build armv7s iPhoneOS
     module_arch_build i386 iPhoneSimulator
     module_arch_build x86_64 iPhoneSimulator
-    module_lib_create "curl"
-    module_inc_copy "curl"
+    module_lib_create "ddpush-daemon haywire"
+    module_inc_copy "ddpush-daemon.h haywire.h"
     echo "Building done." 
 }
+
 

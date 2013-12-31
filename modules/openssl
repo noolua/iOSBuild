@@ -55,22 +55,25 @@ module_arch_build()
   
 module_lib_create()
 {
-    lib_name=$1
+    libs=$1
     mkdir -p ${CURRENTPATH}/lib
-    lipo -create \
-        ${BUILD_ROOT_PATH}/iPhoneSimulator-x86_64.sdk/lib/lib${lib_name}.a \
-        ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/lib/lib${lib_name}.a \
-        ${BUILD_ROOT_PATH}/iPhoneOS-arm64.sdk/lib/lib${lib_name}.a \
-        ${BUILD_ROOT_PATH}/iPhoneOS-armv7s.sdk/lib/lib${lib_name}.a \
-        ${BUILD_ROOT_PATH}/iPhoneOS-armv7.sdk/lib/lib${lib_name}.a \
-        -output ${CURRENTPATH}/lib/lib${lib_name}.a
+    for lib_name in ${libs}; do
+        lipo -create \
+            ${BUILD_ROOT_PATH}/iPhoneSimulator-x86_64.sdk/lib/lib${lib_name}.a \
+            ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/lib/lib${lib_name}.a \
+            ${BUILD_ROOT_PATH}/iPhoneOS-arm64.sdk/lib/lib${lib_name}.a \
+            ${BUILD_ROOT_PATH}/iPhoneOS-armv7s.sdk/lib/lib${lib_name}.a \
+            ${BUILD_ROOT_PATH}/iPhoneOS-armv7.sdk/lib/lib${lib_name}.a \
+            -output ${CURRENTPATH}/lib/lib${lib_name}.a
+    done
 }
 
 module_inc_copy()
 {
-    inc_name=$1
-    mkdir -p ${CURRENTPATH}/include
-    cp -R ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/include/${inc_name} ${CURRENTPATH}/include
+    includes=$1
+    for inc in ${includes}; do
+        cp -R ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/include/${inc} ${CURRENTPATH}/include
+    done
 }
 
 module_download()
@@ -86,9 +89,8 @@ module_building()
     module_arch_build armv7s iPhoneOS
     module_arch_build i386 iPhoneSimulator
     module_arch_build x86_64 iPhoneSimulator
-    module_lib_create ssl
-    module_lib_create crypto
-    module_inc_copy openssl
+    module_lib_create "ssl crypto"
+    module_inc_copy "openssl"
     echo "Building done." 
 }
 
