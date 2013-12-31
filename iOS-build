@@ -45,6 +45,7 @@ cib_check_build_enviroment()
     fi
 
     iOS_SDK=`xcodebuild -showsdks | grep iphoneos | sed "s|.*iphoneos||"`
+
 }
 
 #cib_download_and_extract tar_url tar_name
@@ -94,7 +95,30 @@ cib_load_required_file()
 #usage_print
 cib_usage_print()
 {
-    echo "usage: $0 lua|curl|openssl"
+    echo "usage: $0 lua|curl|openssl|uv"
+}
+
+module_lib_create()
+{
+    libs=$1
+    mkdir -p ${CURRENTPATH}/lib
+    for lib_name in ${libs}; do
+        lipo -create \
+            ${BUILD_ROOT_PATH}/iPhoneSimulator-x86_64.sdk/lib/lib${lib_name}.a \
+            ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/lib/lib${lib_name}.a \
+            ${BUILD_ROOT_PATH}/iPhoneOS-arm64.sdk/lib/lib${lib_name}.a \
+            ${BUILD_ROOT_PATH}/iPhoneOS-armv7s.sdk/lib/lib${lib_name}.a \
+            ${BUILD_ROOT_PATH}/iPhoneOS-armv7.sdk/lib/lib${lib_name}.a \
+            -output ${CURRENTPATH}/lib/lib${lib_name}.a
+    done
+}
+
+module_inc_copy()
+{
+    includes=$1
+    for inc in ${includes}; do
+        cp -R ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/include/${inc} ${CURRENTPATH}/include
+    done
 }
 
 ###########################################################################
@@ -116,7 +140,5 @@ if ! cib_load_required_file ./modules/$MODULE; then
 fi
 
 #begin download and build 
-module_download
-cd "${BUILD_SRC_PATH}/${MODEL}-${VERSION}"
 module_building
 
