@@ -33,11 +33,12 @@ module_arch_build()
     export CC="${DEV_PATH}/usr/bin/clang"
     export CPP="${DEV_PATH}/usr/bin/cpp"
     export AR="${DEV_PATH}/usr/bin/ar"
+    export LD="${DEV_PATH}/usr/bin/ld"
     export RANLIB="${DEV_PATH}/usr/bin/ranlib"
  
     ./configure --prefix="${INSTALLPATH}" --host=arm \
-                --enable-optimize \
                 --without-ssl \
+                --enable-optimize \
                 --enable-symbol-hiding \
                 --disable-ares \
                 --enable-static \
