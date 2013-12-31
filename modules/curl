@@ -1,0 +1,117 @@
+###########################################################################
+#  Change values here                                                     #
+#                                                                         #
+MODEL="curl"                                                              #
+VERSION="7.34.0"                                                          #
+SRCURL="http://curl.haxx.se/download/${MODEL}-${VERSION}.tar.gz"          #
+#                                                                         #
+###########################################################################
+
+module_arch_build()
+{
+    target=$1
+    platform=$2
+
+    INSTALLPATH="${BUILD_ROOT_PATH}/${platform}-${target}.sdk"
+    mkdir -p "${INSTALLPATH}"
+    case $target in
+        arm64|\
+        armv7|\
+        armv7s|\
+        x86_64|\
+        i386)
+            DEV_PATH="$XCODE_PATH/Toolchains/XcodeDefault.xctoolchain"
+            SDK_PATH="$XCODE_PATH/Platforms/${platform}.platform/Developer/SDKs/${platform}${iOS_SDK}.sdk"
+            ;;
+        *)
+            echo "Unknown Architecture $ARCH"
+            exit 1
+            ;;
+    esac
+ 
+    export CFLAGS="-arch ${target} -isysroot ${SDK_PATH} -miphoneos-version-min=${iOS_SDK_MIN}"
+    export CC="${DEV_PATH}/usr/bin/clang"
+    export CPP="${DEV_PATH}/usr/bin/cpp"
+    export AR="${DEV_PATH}/usr/bin/ar"
+    export RANLIB="${DEV_PATH}/usr/bin/ranlib"
+ 
+    ./configure --prefix="${INSTALLPATH}" --host=arm \
+                --enable-optimize \
+                --without-ssl \
+                --enable-symbol-hiding \
+                --disable-ares \
+                --enable-static \
+                --disable-shared \
+                --disable-ftp \
+                --disable-file \
+                --disable-ldap \
+                --disable-ldaps \
+                --disable-rtsp \
+                --disable-proxy \
+                --disable-dict \
+                --disable-telnet \
+                --disable-tftp \
+                --disable-pop3 \
+                --disable-imap \
+                --disable-smtp \
+                --disable-gopher \
+                --disable-manual \
+                --disable-libcurl-option \
+                --disable-ipv6 \
+                --disable-versioned-symbols \
+                --disable-sspi \
+                --disable-crypto-auth \
+                --disable-ntlm-wb \
+                --disable-tls-srp \
+                --disable-soname-bump \
+                --disable-verbose
+
+    make 
+    make install
+    make clean
+    
+    unset CFLAGS
+    unset CC
+    unset CPP
+    unset AR
+    unset RANLIB
+}
+
+module_lib_create()
+{
+    lib_name=$1
+    mkdir -p ${CURRENTPATH}/lib
+    lipo -create \
+        ${BUILD_ROOT_PATH}/iPhoneSimulator-x86_64.sdk/lib/lib${lib_name}.a \
+        ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/lib/lib${lib_name}.a \
+        ${BUILD_ROOT_PATH}/iPhoneOS-arm64.sdk/lib/lib${lib_name}.a \
+        ${BUILD_ROOT_PATH}/iPhoneOS-armv7s.sdk/lib/lib${lib_name}.a \
+        ${BUILD_ROOT_PATH}/iPhoneOS-armv7.sdk/lib/lib${lib_name}.a \
+        -output ${CURRENTPATH}/lib/lib${lib_name}.a
+}
+
+module_inc_copy()
+{
+    inc_name=$1
+    mkdir -p ${CURRENTPATH}/include
+    cp -R ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/include/${inc_name} ${CURRENTPATH}/include
+}
+
+module_download()
+{
+   cib_download_and_extract $SRCURL $MODEL-$VERSION.tar.gz
+}
+
+module_building()
+{
+    echo "Build library..."
+    module_arch_build arm64 iPhoneOS
+    module_arch_build armv7 iPhoneOS
+    module_arch_build armv7s iPhoneOS
+    module_arch_build i386 iPhoneSimulator
+    module_arch_build x86_64 iPhoneSimulator
+    module_lib_create curl
+    module_inc_copy curl
+    echo "Building done." 
+}
+
