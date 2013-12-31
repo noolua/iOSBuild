@@ -1,0 +1,110 @@
+###########################################################################
+#  Change values here                                                     #
+#                                                                         #
+MODEL="ffmpeg"                                                            #
+VERSION="0.11.4"                                                          #
+SRCURL="http://ffmpeg.org/releases/${MODEL}-${VERSION}.tar.gz"            #
+#                                                                         #
+###########################################################################
+
+module_arch_build()
+{
+    target=$1
+    platform=$2
+
+    INSTALLPATH="${BUILD_ROOT_PATH}/${platform}-${target}.sdk"
+    mkdir -p "${INSTALLPATH}"
+    case $target in
+        arm64|\
+        armv7|\
+        armv7s|\
+        x86_64|\
+        i386)
+            DEV_PATH="$XCODE_PATH/Toolchains/XcodeDefault.xctoolchain"
+            SDK_PATH="$XCODE_PATH/Platforms/${platform}.platform/Developer/SDKs/${platform}${iOS_SDK}.sdk"
+            ;;
+        *)
+            echo "Unknown Architecture $ARCH"
+            exit 1
+            ;;
+    esac
+ 
+    CC="${DEV_PATH}/usr/bin/clang"
+
+    case $target in
+        arm64)
+            cpu=
+            HOST=arm
+            MCPU="-mfpu=neon"
+            ;;
+        armv7|\
+        armv7s)
+            cpu="cortex-a9"
+            HOST=arm
+            MCPU="-mfpu=neon"
+            ;;
+        i386)
+            cpu="i386"
+            HOST=i386
+            MCPU=
+            ;;
+        x86_64)
+            cpu="x86_64"
+            HOST=x86_64
+            MCPU=
+            ;;
+        *)
+            echo "Unknown Architecture $ARCH"
+            exit 1
+            ;;
+    esac
+ 
+    ./configure \
+        --disable-doc \
+        --disable-ffmpeg \
+        --disable-ffplay \
+        --disable-ffserver \
+        --disable-avfilter \
+        --disable-debug \
+        --disable-encoders \
+        --enable-cross-compile \
+        --disable-armv5te \
+        --enable-hwaccels \
+        --enable-decoders \
+        --enable-gpl \
+        --enable-libx264 \
+        --enable-libxvid \
+        --enable-pic \
+        --disable-asm \
+        --target-os=darwin \
+        --arch=${HOST} \
+        --cc=${CC} \
+        --as="gas-preprocessor/gas-preprocessor.pl ${CC}" \
+        --sysroot="${SDK_PATH}" \
+        --cpu=${cpu} \
+        --extra-cflags="-arch ${target} -miphoneos-version-min=${iOS_SDK_MIN} ${MCPU} -I${INSTALLPATH}/include" \
+        --extra-ldflags="-arch ${target} -miphoneos-version-min=${iOS_SDK_MIN} ${MCPU} -isysroot ${SDK_PATH} -L${INSTALLPATH}/lib" \
+        --prefix="${INSTALLPATH}"
+
+    make 
+    make install
+    make clean
+    
+}
+
+module_building()
+{
+    cib_download_and_extract $SRCURL $MODEL-$VERSION.tar.gz
+    cd ${BUILD_SRC_PATH}/${MODEL}-${VERSION}
+
+    echo "Build library..."
+#    module_arch_build arm64 iPhoneOS
+#    module_arch_build armv7 iPhoneOS
+#    module_arch_build armv7s iPhoneOS
+#    module_arch_build i386 iPhoneSimulator
+#    module_arch_build x86_64 iPhoneSimulator
+    module_lib_create "avcodec avdevice avformat avutil swresample swscale"
+#    module_inc_copy "libavcodec libavdevice libavformat libavutil libswresample libswscale"
+    echo "Building done." 
+}
+

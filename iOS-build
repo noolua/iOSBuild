@@ -104,11 +104,7 @@ module_lib_create()
     mkdir -p ${CURRENTPATH}/lib
     for lib_name in ${libs}; do
         lipo -create \
-            ${BUILD_ROOT_PATH}/iPhoneSimulator-x86_64.sdk/lib/lib${lib_name}.a \
-            ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/lib/lib${lib_name}.a \
-            ${BUILD_ROOT_PATH}/iPhoneOS-arm64.sdk/lib/lib${lib_name}.a \
-            ${BUILD_ROOT_PATH}/iPhoneOS-armv7s.sdk/lib/lib${lib_name}.a \
-            ${BUILD_ROOT_PATH}/iPhoneOS-armv7.sdk/lib/lib${lib_name}.a \
+            `find ${BUILD_ROOT_PATH} -name lib${lib_name}.a` \
             -output ${CURRENTPATH}/lib/lib${lib_name}.a
     done
 }
