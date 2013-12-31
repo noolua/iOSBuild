@@ -33,7 +33,7 @@ module_arch_build()
     AR="${DEV_PATH}/usr/bin/ar"
     RANLIB="${DEV_PATH}/usr/bin/ranlib"
     STRIP="${DEV_PATH}/usr/bin/strip"
-    MYCFLAGS="-std=gnu99 -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -Wall -O3 -fPIC -miphoneos-version-min=${iOS_SDK_MIN}"
+    MYCFLAGS="-D__HAVE_CURL_PERFORM__=1 -std=gnu99 -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -Wall -O3 -fPIC -miphoneos-version-min=${iOS_SDK_MIN}"
     LDFLAGS="-L${INSTALLPATH}/lib -framework Foundation -framework Security -lcurl -llua -luv -lhaywire -lz"
 
     sed -ie "s#^CC=.*#CC=${CC}#" "Makefile"
