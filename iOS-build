@@ -1,0 +1,115 @@
+#!/bin/sh
+#  Created by noolua on 2013-7-26.
+#  Copyright 2013 noolua. All rights reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+###########################################################################
+# HELPER FUNCTIONS
+###########################################################################
+
+cib_check_build_enviroment()
+{
+    if [ ! \( -e "`whereis make`" \) ] ; then
+       echo "The 'Command Line Tools' of Xcode could not be found. Install this component in Xcode first."
+       exit 1
+    fi
+
+    NCPU=`sysctl -n hw.ncpu`
+    if test x$NJOB = x; then
+        NJOB=$NCPU
+    fi
+
+    XCODE_PATH=`xcode-select --print-path`
+
+    if [ -z "$XCODE_PATH" ]; then
+        echo "Could not find XCode location (use xcode-select -switch to set the correct path)"
+        exit 1
+    fi
+
+    iOS_SDK=`xcodebuild -showsdks | grep iphoneos | sed "s|.*iphoneos||"`
+}
+
+#cib_download_and_extract tar_url tar_name
+cib_download_and_extract()
+{
+    URL=$1
+    TAR=$2
+
+    mkdir -p "${BUILD_TARBALLS_PATH}"
+    
+    set -e
+    if [ ! -e ${BUILD_TARBALLS_PATH}/${TAR} ]; then
+        echo "Downloading '${TAR}'"
+        if /bin/sh -c "wget -V > /dev/null 2>&1"; then
+            wget --no-check-certificate ${URL} -O "${BUILD_TARBALLS_PATH}/${TAR}"
+        else
+            if /bin/sh -c "curl -V > /dev/null 2>&1"; then
+                curl -L ${URL} -o "${BUILD_TARBALLS_PATH}/${TAR}"
+            else
+                echo "NOT found command 'curl' or 'wget' for download tarball, exit"
+                exit 1
+            fi
+        fi
+    else
+        echo "Using ${TAR}"
+    fi
+
+    mkdir -p "${BUILD_SRC_PATH}"
+    tar xf "${BUILD_TARBALLS_PATH}/${TAR}" -C "${BUILD_SRC_PATH}"
+}
+
+#check and load require file FILE_PATH 
+cib_load_required_file()
+{
+    FILE_PATH=$1
+    if [ -f $FILE_PATH ]
+    then
+        echo "require '$FILE_PATH' successful. "
+        . $FILE_PATH
+    else
+        echo "require '$FILE_PATH' not exist."
+        return 1;
+    fi
+    return 0;
+}
+
+#usage_print
+cib_usage_print()
+{
+    echo "usage: $0 lua|curl|openssl"
+}
+
+###########################################################################
+#Build stage
+###########################################################################
+
+cib_check_build_enviroment
+
+CURRENTPATH=`pwd`
+BUILD_TARBALLS_PATH=${CURRENTPATH}/build/tarballs
+BUILD_SRC_PATH=${CURRENTPATH}/build/src
+BUILD_ROOT_PATH=${CURRENTPATH}/build/bin
+MODULE=$1
+
+
+if ! cib_load_required_file ./modules/$MODULE; then 
+    cib_usage_print;
+    exit 1;
+fi
+
+#begin download and build 
+module_download
+cd "${BUILD_SRC_PATH}/${MODEL}-${VERSION}"
+module_building
+

@@ -1,0 +1,86 @@
+###########################################################################
+#  Change values here                                                     #
+#                                                                         #
+MODEL="lua"                                                               #
+VERSION="5.1.5"                                                           #
+SRCURL="http://www.lua.org/ftp/${MODEL}-${VERSION}.tar.gz"                #
+#                                                                         #
+###########################################################################
+
+module_arch_build()
+{
+    target=$1
+    platform=$2
+
+    INSTALLPATH="${BUILD_ROOT_PATH}/${platform}-${target}.sdk"
+    mkdir -p "${INSTALLPATH}"
+    case $target in
+        arm64|\
+        armv7|\
+        armv7s|\
+        x86_64|\
+        i386)
+            DEV_PATH="$XCODE_PATH/Toolchains/XcodeDefault.xctoolchain"
+            SDK_PATH="$XCODE_PATH/Platforms/${platform}.platform/Developer/SDKs/${platform}${iOS_SDK}.sdk"
+            ;;
+        *)
+            echo "Unknown Architecture $ARCH"
+            exit 1
+            ;;
+    esac
+ 
+    CC="${DEV_PATH}/usr/bin/clang -arch ${target}"
+    AR="${DEV_PATH}/usr/bin/ar rcu"
+    RANLIB="${DEV_PATH}/usr/bin/ranlib"
+    MYLDFLAGS="-miphoneos-version-min=4.3 -L${SDK_PATH}/usr/lib -L${SDK_PATH}/usr/lib/system"
+ 
+    sed -ie "s#^CC=.*#CC=${CC}#" "./src/Makefile"
+    sed -ie "s#^AR=.*#AR=${AR}#" "./src/Makefile"
+    sed -ie "s#^RANLIB=.*#RANLIB=${RANLIB}#" "./src/Makefile"
+    sed -ie "s#^CFLAGS=.*#CFLAGS=-miphoneos-version-min=4.3 -isysroot ${SDK_PATH} -O2 -D_FILE_OFFSET_BITS=64 -Wall \$(MYCFLAGS)#" "./src/Makefile"
+    sed -ie "s#^MYLDFLAGS=.*#MYLDFLAGS=${MYLDFLAGS}#" "./src/Makefile"
+
+    make posix
+    make install INSTALL_TOP=${INSTALLPATH}
+    make clean
+}
+  
+module_lib_create()
+{
+    mkdir -p ${CURRENTPATH}/lib
+    lipo -create \
+        ${BUILD_ROOT_PATH}/iPhoneSimulator-x86_64.sdk/lib/lib${MODEL}.a \
+        ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/lib/lib${MODEL}.a \
+        ${BUILD_ROOT_PATH}/iPhoneOS-arm64.sdk/lib/lib${MODEL}.a \
+        ${BUILD_ROOT_PATH}/iPhoneOS-armv7s.sdk/lib/lib${MODEL}.a \
+        ${BUILD_ROOT_PATH}/iPhoneOS-armv7.sdk/lib/lib${MODEL}.a \
+        -output ${CURRENTPATH}/lib/lib${MODEL}.a
+}
+
+module_inc_copy()
+{
+    mkdir -p ${CURRENTPATH}/include
+    includes="lauxlib.h lua.h lua.hpp luaconf.h lualib.h" 
+    for inc in ${includes}; do
+        cp ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/include/${inc} ${CURRENTPATH}/include
+    done
+}
+
+module_download()
+{
+   cib_download_and_extract $SRCURL $MODEL-$VERSION.tar.gz
+}
+
+module_building()
+{
+    echo "Build library..."
+    module_arch_build arm64 iPhoneOS
+    module_arch_build armv7 iPhoneOS
+    module_arch_build armv7s iPhoneOS
+    module_arch_build i386 iPhoneSimulator
+    module_arch_build x86_64 iPhoneSimulator
+    module_lib_create
+    module_inc_copy
+    echo "Building done." 
+}
+
