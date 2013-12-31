@@ -1,0 +1,94 @@
+###########################################################################
+#  Change values here                                                     #
+#                                                                         #
+MODEL="openssl"                                                           #
+VERSION="1.0.1e"                                                          #
+SRCURL="http://www.openssl.org/source/${MODEL}-${VERSION}.tar.gz"         #
+#                                                                         #
+###########################################################################
+
+module_arch_build()
+{
+    target=$1
+    platform=$2
+
+    INSTALLPATH="${BUILD_ROOT_PATH}/${platform}-${target}.sdk"
+    mkdir -p "${INSTALLPATH}"
+    case $target in
+        arm64|\
+        armv7|\
+        armv7s|\
+        x86_64|\
+        i386)
+            DEV_PATH="$XCODE_PATH/Toolchains/XcodeDefault.xctoolchain"
+            SDK_PATH="$XCODE_PATH/Platforms/${platform}.platform/Developer/SDKs/${platform}${iOS_SDK}.sdk"
+            ;;
+        *)
+            echo "Unknown Architecture $ARCH"
+            exit 1
+            ;;
+    esac
+ 
+    export CC="${DEV_PATH}/usr/bin/clang -arch ${target}"
+ 
+     if [ "${target}" == "arm64" ] || [ "${target}" == "x86_64" ]
+    then
+        HOST="BSD-generic64"
+        CONFIG="no-gost no-asm enable-ec_nistp_64_gcc_128"
+    else
+        HOST="BSD-generic32"
+        CONFIG="no-gost no-asm"
+    fi
+
+    ./Configure ${HOST} ${CONFIG} --openssldir="${INSTALLPATH}"
+    sed -ie "s!^CFLAG=!CFLAG=-isysroot ${SDK_PATH} -miphoneos-version-min=${iOS_SDK_MIN} !" "Makefile"
+    # remove sig_atomic for iPhoneOS
+    if (${platform} == "iPhoneOS") then
+        sed -ie "s!static volatile sig_atomic_t intr_signal;!static volatile intr_signal;!" "crypto/ui/ui_openssl.c"
+    fi
+
+    make 
+    make install
+    make clean
+    unset CC
+}
+  
+module_lib_create()
+{
+    lib_name=$1
+    mkdir -p ${CURRENTPATH}/lib
+    lipo -create \
+        ${BUILD_ROOT_PATH}/iPhoneSimulator-x86_64.sdk/lib/lib${lib_name}.a \
+        ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/lib/lib${lib_name}.a \
+        ${BUILD_ROOT_PATH}/iPhoneOS-arm64.sdk/lib/lib${lib_name}.a \
+        ${BUILD_ROOT_PATH}/iPhoneOS-armv7s.sdk/lib/lib${lib_name}.a \
+        ${BUILD_ROOT_PATH}/iPhoneOS-armv7.sdk/lib/lib${lib_name}.a \
+        -output ${CURRENTPATH}/lib/lib${lib_name}.a
+}
+
+module_inc_copy()
+{
+    inc_name=$1
+    mkdir -p ${CURRENTPATH}/include
+    cp -R ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/include/${inc_name} ${CURRENTPATH}/include
+}
+
+module_download()
+{
+   cib_download_and_extract $SRCURL $MODEL-$VERSION.tar.gz
+}
+
+module_building()
+{
+    echo "Build library..."
+    module_arch_build arm64 iPhoneOS
+    module_arch_build armv7 iPhoneOS
+    module_arch_build armv7s iPhoneOS
+    module_arch_build i386 iPhoneSimulator
+    module_arch_build x86_64 iPhoneSimulator
+    module_lib_create ssl
+    module_lib_create crypto
+    module_inc_copy openssl
+    echo "Building done." 
+}
+

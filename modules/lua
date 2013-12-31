@@ -32,12 +32,12 @@ module_arch_build()
     CC="${DEV_PATH}/usr/bin/clang -arch ${target}"
     AR="${DEV_PATH}/usr/bin/ar rcu"
     RANLIB="${DEV_PATH}/usr/bin/ranlib"
-    MYLDFLAGS="-miphoneos-version-min=4.3 -L${SDK_PATH}/usr/lib -L${SDK_PATH}/usr/lib/system"
+    MYLDFLAGS="-miphoneos-version-min=${iOS_SDK_MIN} -L${SDK_PATH}/usr/lib -L${SDK_PATH}/usr/lib/system"
  
     sed -ie "s#^CC=.*#CC=${CC}#" "./src/Makefile"
     sed -ie "s#^AR=.*#AR=${AR}#" "./src/Makefile"
     sed -ie "s#^RANLIB=.*#RANLIB=${RANLIB}#" "./src/Makefile"
-    sed -ie "s#^CFLAGS=.*#CFLAGS=-miphoneos-version-min=4.3 -isysroot ${SDK_PATH} -O2 -D_FILE_OFFSET_BITS=64 -Wall \$(MYCFLAGS)#" "./src/Makefile"
+    sed -ie "s#^CFLAGS=.*#CFLAGS=-miphoneos-version-min=${iOS_SDK_MIN} -isysroot ${SDK_PATH} -O2 -D_FILE_OFFSET_BITS=64 -Wall \$(MYCFLAGS)#" "./src/Makefile"
     sed -ie "s#^MYLDFLAGS=.*#MYLDFLAGS=${MYLDFLAGS}#" "./src/Makefile"
 
     make posix
