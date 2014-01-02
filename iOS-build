@@ -114,6 +114,7 @@ cib_module_lib_create()
 cib_module_inc_copy()
 {
     includes=$1
+    mkdir -p ${CURRENTPATH}/include
     for inc in ${includes}; do
         cp -R ${BUILD_ROOT_PATH}/iPhoneSimulator-i386.sdk/include/${inc} ${CURRENTPATH}/include
     done

@@ -1,0 +1,75 @@
+###########################################################################
+#  Change values here                                                     #
+#                                                                         #
+MODEL="libisofs"                                                          #
+VERSION="1.2.2"                                                           #
+SRCURL="http://files.libburnia-project.org/releases/${MODEL}-${VERSION}.tar.gz"        #
+#                                                                         #
+###########################################################################
+
+module_arch_build()
+{
+    target=$1
+    platform=$2
+
+    INSTALLPATH="${BUILD_ROOT_PATH}/${platform}-${target}.sdk"
+    mkdir -p "${INSTALLPATH}"
+    case $target in
+        arm64|\
+        armv7|\
+        armv7s|\
+        x86_64|\
+        i386)
+            DEV_PATH="$XCODE_PATH/Toolchains/XcodeDefault.xctoolchain"
+            SDK_PATH="$XCODE_PATH/Platforms/${platform}.platform/Developer/SDKs/${platform}${iOS_SDK}.sdk"
+            ;;
+        *)
+            echo "Unknown Architecture $ARCH"
+            exit 1
+            ;;
+    esac
+ 
+    export CC="${DEV_PATH}/usr/bin/clang"
+    export CPP="${DEV_PATH}/usr/bin/cpp"
+    export AR="${DEV_PATH}/usr/bin/ar"
+    export STRIP="${DEV_PATH}/usr/bin/strip"
+    export RANLIB="${DEV_PATH}/usr/bin/ranlib"
+    export CFLAGS="-Os -Wall -arch ${target} -pipe -isysroot ${SDK_PATH} -miphoneos-version-min=${iOS_SDK_MIN}"
+    export CPPFLAGS="-I${INSTALLPATH}/include"
+    export LDFLAGS="-L${INSTALLPATH}/lib -L${SDK_PATH}/usr/lib -L${SDK_PATH}/usr/lib/system"
+ 
+    
+    ./configure --prefix="${INSTALLPATH}" \
+                --host=armv7-apple-darwin \
+                --enable-static \
+                --disable-shared
+    make 
+    make install
+    make clean
+    
+    unset CC
+    unset CPP
+    unset AR
+    unset STRIP
+    unset RANLIB
+    unset CFLAGS
+    unset CPPFALGS
+    unset LDFLAGS
+}
+
+module_building()
+{
+    cib_download_and_extract $SRCURL $MODEL-$VERSION.tar.gz
+    cd ${BUILD_SRC_PATH}/${MODEL}-${VERSION}
+
+    echo "Build library..."
+    module_arch_build arm64 iPhoneOS
+    module_arch_build armv7 iPhoneOS
+    module_arch_build armv7s iPhoneOS
+    module_arch_build i386 iPhoneSimulator
+    module_arch_build x86_64 iPhoneSimulator
+    cib_module_lib_create "isofs"
+    cib_module_inc_copy "libisofs"
+    echo "Building done." 
+}
+
