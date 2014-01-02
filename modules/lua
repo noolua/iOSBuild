@@ -56,8 +56,8 @@ module_building()
     module_arch_build armv7s iPhoneOS
     module_arch_build i386 iPhoneSimulator
     module_arch_build x86_64 iPhoneSimulator
-    module_lib_create "lua"
-    module_inc_copy "lauxlib.h lua.h lua.hpp luaconf.h lualib.h"
+    cib_module_lib_create "lua"
+    cib_module_inc_copy "lauxlib.h lua.h lua.hpp luaconf.h lualib.h"
     echo "Building done." 
 }
 

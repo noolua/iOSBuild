@@ -98,13 +98,13 @@ module_building()
     cd ${BUILD_SRC_PATH}/${MODEL}-${VERSION}
 
     echo "Build library..."
-#    module_arch_build arm64 iPhoneOS
-#    module_arch_build armv7 iPhoneOS
-#    module_arch_build armv7s iPhoneOS
-#    module_arch_build i386 iPhoneSimulator
-#    module_arch_build x86_64 iPhoneSimulator
-    module_lib_create "avcodec avdevice avformat avutil swresample swscale"
-#    module_inc_copy "libavcodec libavdevice libavformat libavutil libswresample libswscale"
+    module_arch_build arm64 iPhoneOS
+    module_arch_build armv7 iPhoneOS
+    module_arch_build armv7s iPhoneOS
+    module_arch_build i386 iPhoneSimulator
+    module_arch_build x86_64 iPhoneSimulator
+    cib_module_lib_create "avcodec avdevice avformat avutil swresample swscale"
+    cib_module_inc_copy "libavcodec libavdevice libavformat libavutil libswresample libswscale"
     echo "Building done." 
 }
 

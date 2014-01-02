@@ -29,15 +29,16 @@ module_arch_build()
             ;;
     esac
  
-    export CFLAGS="-arch ${target} -isysroot ${SDK_PATH} -miphoneos-version-min=${iOS_SDK_MIN}"
+    export CFLAGS="-arch ${target} -pipe -Os -gdwarf-2 -isysroot ${SDK_PATH} -miphoneos-version-min=${iOS_SDK_MIN}"
     export CC="${DEV_PATH}/usr/bin/clang"
     export CPP="${DEV_PATH}/usr/bin/cpp"
     export AR="${DEV_PATH}/usr/bin/ar"
     export LD="${DEV_PATH}/usr/bin/ld"
+    export LDFLAGS="-arch ${target} -isysroot ${SDK_PATH}"    
     export RANLIB="${DEV_PATH}/usr/bin/ranlib"
  
-    ./configure --prefix="${INSTALLPATH}" --host=arm \
-                --without-ssl \
+    ./configure --prefix="${INSTALLPATH}" --host=armv7-apple-darwin \
+                --with-darwinssl \
                 --enable-optimize \
                 --enable-symbol-hiding \
                 --disable-ares \
@@ -89,8 +90,8 @@ module_building()
     module_arch_build armv7s iPhoneOS
     module_arch_build i386 iPhoneSimulator
     module_arch_build x86_64 iPhoneSimulator
-    module_lib_create "curl"
-    module_inc_copy "curl"
+    cib_module_lib_create "curl"
+    cib_module_inc_copy "curl"
     echo "Building done." 
 }
 

@@ -98,7 +98,8 @@ cib_usage_print()
     echo "usage: $0 lua|curl|openssl|uv"
 }
 
-module_lib_create()
+# cib_module_lib_create "name1 name2"
+cib_module_lib_create()
 {
     libs=$1
     mkdir -p ${CURRENTPATH}/lib
@@ -109,7 +110,8 @@ module_lib_create()
     done
 }
 
-module_inc_copy()
+# cib_module_inc_copy "name1 name2"
+cib_module_inc_copy()
 {
     includes=$1
     for inc in ${includes}; do

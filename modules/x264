@@ -92,8 +92,8 @@ module_building()
     module_arch_build armv7s iPhoneOS
     module_arch_build i386 iPhoneSimulator
     module_arch_build x86_64 iPhoneSimulator
-    module_lib_create "x264"
-    module_inc_copy "x264.h x264_config.h"
+    cib_module_lib_create "x264"
+    cib_module_inc_copy "x264.h x264_config.h"
     echo "Building done." 
 }
 

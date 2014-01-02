@@ -67,8 +67,8 @@ module_building()
     module_arch_build armv7s iPhoneOS
     module_arch_build i386 iPhoneSimulator
     module_arch_build x86_64 iPhoneSimulator
-    module_lib_create "ddpush-daemon haywire"
-    module_inc_copy "ddpush-daemon.h haywire.h"
+    cib_module_lib_create "ddpush-daemon haywire"
+    cib_module_inc_copy "ddpush-daemon.h haywire.h"
     echo "Building done." 
 }
 
