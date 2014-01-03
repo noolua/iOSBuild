@@ -133,7 +133,7 @@ BUILD_ROOT_PATH=${CURRENTPATH}/build/bin
 MODULE=$1
 
 
-if ! cib_load_required_file ./modules/$MODULE; then 
+if ! cib_load_required_file ./packages/$MODULE; then 
     cib_usage_print;
     exit 1;
 fi
