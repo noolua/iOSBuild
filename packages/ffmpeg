@@ -2,7 +2,7 @@
 #  Change values here                                                     #
 #                                                                         #
 MODEL="ffmpeg"                                                            #
-VERSION="0.11.4"                                                          #
+VERSION="0.11.5"                                                          #
 SRCURL="http://ffmpeg.org/releases/${MODEL}-${VERSION}.tar.gz"            #
 #                                                                         #
 ###########################################################################
@@ -30,10 +30,14 @@ module_arch_build()
     esac
  
     CC="${DEV_PATH}/usr/bin/clang"
+    AR="${DEV_PATH}/usr/bin/ar"
+    AS="${DEV_PATH}/usr/bin/as"
+    LD="${DEV_PATH}/usr/bin/clang"
+    RANLIB="${DEV_PATH}/usr/bin/ranlib"
 
     case $target in
         arm64)
-            cpu=
+            cpu="generic"
             HOST=arm
             MCPU="-mfpu=neon"
             ;;
@@ -61,6 +65,7 @@ module_arch_build()
  
     ./configure \
         --disable-doc \
+        --disable-ffprobe \
         --disable-ffmpeg \
         --disable-ffplay \
         --disable-ffserver \
@@ -79,13 +84,16 @@ module_arch_build()
         --target-os=darwin \
         --arch=${HOST} \
         --cc=${CC} \
-        --as="gas-preprocessor/gas-preprocessor.pl ${CC}" \
+        --ar=${AR} \
+        --as=${AS} \
+        --ld=${LD} \
         --sysroot="${SDK_PATH}" \
         --cpu=${cpu} \
         --extra-cflags="-arch ${target} -miphoneos-version-min=${iOS_SDK_MIN} ${MCPU} -I${INSTALLPATH}/include" \
         --extra-ldflags="-arch ${target} -miphoneos-version-min=${iOS_SDK_MIN} ${MCPU} -isysroot ${SDK_PATH} -L${INSTALLPATH}/lib" \
         --prefix="${INSTALLPATH}"
 
+    sed -ie "s#^RANLIB=.*#RANLIB=${RANLIB}#" "./config.mak"
     make 
     make install
     make clean
