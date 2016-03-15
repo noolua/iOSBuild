@@ -1,9 +1,9 @@
 ###########################################################################
 #  Change values here                                                     #
 #                                                                         #
-MODEL="libuv"                                                             #
-VERSION="1.8.0"                                                           #
-SRCURL="https://github.com/libuv/libuv/archive/v${VERSION}.tar.gz"        #
+MODEL="La-Reale"                                                          #
+VERSION="0.0.1"                                                           #
+SRCURL="http://www.nnd.org/releases/${MODEL}-${VERSION}.tar.gz"           #
 #                                                                         #
 ###########################################################################
 
@@ -29,33 +29,28 @@ module_arch_build()
             ;;
     esac
  
-    export CC="${DEV_PATH}/usr/bin/clang"
-    export CPP="${DEV_PATH}/usr/bin/cpp"
-    export AR="${DEV_PATH}/usr/bin/ar"
-    export RANLIB="${DEV_PATH}/usr/bin/ranlib"
-    export CFLAGS="-O3 -Wall -arch ${target} -isysroot ${SDK_PATH} -miphoneos-version-min=${iOS_SDK_MIN}"
-    export CPPFLAGS="-I${INSTALLPATH}/include"
-    export LDFLAGS="-L${INSTALLPATH}/lib -L${SDK_PATH}/usr/lib -L${SDK_PATH}/usr/lib/system"
-    export LIBS=""
- 
-    
-    ./autogen.sh
-    ./configure --prefix="${INSTALLPATH}" --host=arm-darwin\
-                --enable-static \
-                --disable-shared \
-                --with-sysroot="${SDK_PATH}"
-    make 
+    CC="${DEV_PATH}/usr/bin/clang"
+    AR="${DEV_PATH}/usr/bin/ar"
+    RANLIB="${DEV_PATH}/usr/bin/ranlib"
+    STRIP="${DEV_PATH}/usr/bin/strip"
+    CFLAGS="-arch ${target} -miphoneos-version-min=${iOS_SDK_MIN} -isysroot ${SDK_PATH} -O2 -D_FILE_OFFSET_BITS=64 -Wall"
+    LIBS="curl polarssl lua uv m z dl"
+    MYCFLAGS="${CFLAGS} -std=gnu99 -D_LARGEFILE_SOURCE -O2 -fPIC"
+    LDFLAGS="-L${SDK_PATH}/usr/lib -L${SDK_PATH}/usr/lib/system -L${INSTALLPATH}/lib -framework Foundation -framework Security"
+
+
+    sed -ie "s#^CC=.*#CC=${CC}#" "Makefile"
+    sed -ie "s#^AR=.*#AR=${AR}#" "Makefile"
+    sed -ie "s#^RANLIB=.*#RANLIB=${RANLIB}#" "Makefile"
+    sed -ie "s#^STRIP=.*#STRIP=${STRIP}#" "Makefile"
+    sed -ie "s#^LIBS+=.*#LIBS+=${LIBS}#" "Makefile"
+    sed -ie "s#^CFLAGS+=.*#CFLAGS+=${MYCFLAGS} -I./include -I${INSTALLPATH}/include #" "Makefile"
+    sed -ie "s#^LDFLAGS+=.*#LDFLAGS+=${LDFLAGS}#" "Makefile"
+    sed -ie "s#^PREFIX=.*#PREFIX=${INSTALLPATH}#" "Makefile"
+
+    make Darwin=1
     make install
     make clean
-    
-    unset CC
-    unset CPP
-    unset AR
-    unset RANLIB
-    unset CFLAGS
-    unset CPPFALGS
-    unset LDFLAGS
-    unset LIBS    
 }
 
 module_building()
@@ -69,8 +64,8 @@ module_building()
     module_arch_build armv7s iPhoneOS
     module_arch_build i386 iPhoneSimulator
     module_arch_build x86_64 iPhoneSimulator
-    cib_module_lib_create "uv"
-    cib_module_inc_copy "uv.h uv-version.h uv-unix.h uv-threadpool.h uv-errno.h uv-darwin.h"
+    cib_module_lib_create "La-Reale"
+    cib_module_inc_copy "La-Reale.h"
     echo "Building done." 
 }
 
